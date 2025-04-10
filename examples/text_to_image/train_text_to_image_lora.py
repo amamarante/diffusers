@@ -107,8 +107,10 @@ def log_validation(
     args,
     accelerator,
     epoch,
+    global_step,
     is_final_validation=False,
-):
+    ):
+    pipeline.safety_checker = None
     logger.info(
         f"Running validation... \n Generating {args.num_validation_images} images with prompt:"
         f" {args.validation_prompt}."
@@ -133,6 +135,8 @@ def log_validation(
         if tracker.name == "tensorboard":
             np_images = np.stack([np.asarray(img) for img in images])
             tracker.writer.add_images(phase_name, np_images, epoch, dataformats="NHWC")
+            for image in images:
+                tracker.writer.add_image('output', image, global_step)
         if tracker.name == "wandb":
             tracker.log(
                 {
@@ -919,7 +923,7 @@ def main():
                     variant=args.variant,
                     torch_dtype=weight_dtype,
                 )
-                images = log_validation(pipeline, args, accelerator, epoch)
+                images = log_validation(pipeline, args, accelerator, epoch, global_step)
 
                 del pipeline
                 torch.cuda.empty_cache()
@@ -951,7 +955,7 @@ def main():
             pipeline.load_lora_weights(args.output_dir)
 
             # run inference
-            images = log_validation(pipeline, args, accelerator, epoch, is_final_validation=True)
+            images = log_validation(pipeline, args, accelerator, epoch, global_step, is_final_validation=True)
 
         if args.push_to_hub:
             save_model_card(
