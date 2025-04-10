@@ -141,7 +141,7 @@ def log_validation(
                 print("Foram encontrados valores infinitos na imagem.")
             else:   
                 for idx, image  in enumerate(images):
-                    image.save(f"{epoch}--{idx}.png")   
+                    image.save(f"./output_lora/logs/validation/{epoch}/{idx}.png")   
         if tracker.name == "wandb":
             tracker.log(
                 {
