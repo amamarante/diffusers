@@ -135,13 +135,17 @@ def log_validation(
         if tracker.name == "tensorboard":
             np_images = np.stack([np.asarray(img) for img in images])
             tracker.writer.add_images(phase_name, np_images, epoch, dataformats="NHWC")
+            img_error = False
             for image in images:
                 if np.isnan(image).any():
                     print("Foram encontrados NaN na imagem.")
+                    img_error = True
                 if np.isinf(image).any():
                     print("Foram encontrados valores infinitos na imagem.")
-                else:
-                    tracker.writer.add_image('output', image, global_step)
+                    img_error = True
+            if not img_error:    
+                for idx, image in images:
+                    image.save(f"{epoch}--{idx}.png")   
         if tracker.name == "wandb":
             tracker.log(
                 {
