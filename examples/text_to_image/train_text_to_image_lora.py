@@ -107,7 +107,6 @@ def log_validation(
     args,
     accelerator,
     epoch,
-    global_step,
     is_final_validation=False,
     ):
     pipeline.safety_checker = None
@@ -135,16 +134,13 @@ def log_validation(
         if tracker.name == "tensorboard":
             np_images = np.stack([np.asarray(img) for img in images])
             tracker.writer.add_images(phase_name, np_images, epoch, dataformats="NHWC")
-            img_error = False
-            for image in images:
-                if np.isnan(image).any():
-                    print("Foram encontrados NaN na imagem.")
-                    img_error = True
-                if np.isinf(image).any():
-                    print("Foram encontrados valores infinitos na imagem.")
-                    img_error = True
-            if not img_error:    
-                for idx, image in images:
+            if np.isnan(images).any():
+                print("Foram encontrados NaN na imagem.")
+                
+            if np.isinf(images).any():
+                print("Foram encontrados valores infinitos na imagem.")
+            else:   
+                for idx, image  in enumerate(images):
                     image.save(f"{epoch}--{idx}.png")   
         if tracker.name == "wandb":
             tracker.log(
@@ -932,7 +928,7 @@ def main():
                     variant=args.variant,
                     torch_dtype=weight_dtype,
                 )
-                images = log_validation(pipeline, args, accelerator, epoch, global_step)
+                images = log_validation(pipeline, args, accelerator, epoch)
 
                 del pipeline
                 torch.cuda.empty_cache()
@@ -964,7 +960,7 @@ def main():
             pipeline.load_lora_weights(args.output_dir)
 
             # run inference
-            images = log_validation(pipeline, args, accelerator, epoch, global_step, is_final_validation=True)
+            images = log_validation(pipeline, args, accelerator, epoch, is_final_validation=True)
 
         if args.push_to_hub:
             save_model_card(
