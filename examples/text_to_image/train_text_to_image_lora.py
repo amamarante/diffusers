@@ -136,7 +136,12 @@ def log_validation(
             np_images = np.stack([np.asarray(img) for img in images])
             tracker.writer.add_images(phase_name, np_images, epoch, dataformats="NHWC")
             for image in images:
-                tracker.writer.add_image('output', image, global_step)
+                if np.isnan(image).any():
+                    print("Foram encontrados NaN na imagem.")
+                if np.isinf(image).any():
+                    print("Foram encontrados valores infinitos na imagem.")
+                else:
+                    tracker.writer.add_image('output', image, global_step)
         if tracker.name == "wandb":
             tracker.log(
                 {
